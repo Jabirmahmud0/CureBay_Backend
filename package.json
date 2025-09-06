@@ -4,9 +4,15 @@
   "description": "Backend server for CureBay",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon src/index.js",
     "build": "tsc",
     "start": "node dist/index.js",
+    "seed": "node seed/seedData.js",
+    "seed:banners": "node seed/seedBanners.js",
+    "seed:categories": "node seed/seedCategories.js",
+    "seed:medicines": "node seed/seedMedicines.js",
+    "seed:hero": "node seed/seedHero.js",
+    "seed:discount": "node seed/seedDiscount.js",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },

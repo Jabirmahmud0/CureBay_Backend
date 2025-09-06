@@ -4,6 +4,10 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { verifyToken } = require('../controllers/authController');
+const { syncUser } = require('../middleware/userSync');
+
+// Apply sync middleware to all routes in this file
+router.use(syncUser);
 
 // GET /api/users - get all users
 router.get('/', async (req, res) => {
@@ -15,31 +19,27 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/users/me - get current user profile
+// GET /api/users/me - get current user profile (now using middleware)
 router.get('/me', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-    const idToken = authHeader.split(' ')[1];
-    const decoded = await verifyToken(idToken);
-    const email = decoded.email;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    // User is already synced and attached to req by middleware
+    const user = req.user;
+    
     res.json({
+      _id: user._id,
       name: user.name,
       email: user.email,
+      username: user.username,
       role: user.role || 'user',
+      profilePicture: user.profilePicture,
+      isActive: user.isActive
     });
   } catch (err) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// PATCH /api/users/:id/role - update user role
+// PATCH /api/users/:id/role - update user role (admin only)
 router.patch('/:id/role', async (req, res) => {
   try {
     const { role } = req.body;

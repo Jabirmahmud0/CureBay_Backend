@@ -1,1 +1,196 @@
 "use strict";
+
+const Medicine = require('../models/Medicine');
+const User = require('../models/User');
+
+// Get all medicines with filtering and pagination
+async function getMedicines(req, res) {
+  console.log('getMedicines called');
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder || 'desc';
+    const inStock = req.query.inStock === 'true' ? true : req.query.inStock === 'false' ? false : null;
+    const category = req.query.category || null;
+    const search = req.query.search || null;
+    
+    // Build filter object
+    let filter = {};
+    
+    // Filter by stock status
+    if (inStock !== null) {
+      filter.inStock = inStock;
+    }
+    
+    // Filter by category
+    if (category) {
+      filter.category = category;
+    }
+    
+    // Filter by search term
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { genericName: { $regex: search, $options: 'i' } },
+        { company: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Build sort object
+    let sort = {};
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    
+    // Get medicines
+    const medicines = await Medicine.find(filter)
+      .populate('category', 'name')
+      .populate('seller', 'name')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+    
+    // Get total count for pagination
+    const total = await Medicine.countDocuments(filter);
+    
+    res.json({
+      medicines,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    console.error('Error in getMedicines:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// Get medicine by ID
+async function getMedicineById(req, res) {
+  console.log('getMedicineById called');
+  try {
+    const medicine = await Medicine.findById(req.params.id)
+      .populate('category', 'name')
+      .populate('seller', 'name');
+    
+    if (!medicine) {
+      return res.status(404).json({ error: 'Medicine not found' });
+    }
+    
+    res.json(medicine);
+  } catch (err) {
+    console.error('Error in getMedicineById:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// Get discounted medicines
+async function getDiscountedMedicines(req, res) {
+  console.log('getDiscountedMedicines called');
+  try {
+    const limit = parseInt(req.query.limit) || 8;
+    
+    // Get medicines with discount greater than 0
+    const medicines = await Medicine.find({ discountPercentage: { $gt: 0 } })
+      .populate('category', 'name')
+      .populate('seller', 'name')
+      .sort({ discountPercentage: -1, createdAt: -1 })
+      .limit(limit);
+    
+    res.json({
+      medicines
+    });
+  } catch (err) {
+    console.error('Error in getDiscountedMedicines:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// Create new medicine (seller/admin only)
+async function createMedicine(req, res) {
+  console.log('createMedicine called');
+  try {
+    const medicine = new Medicine({
+      ...req.body,
+      seller: req.user._id // Assuming user is attached from auth middleware
+    });
+    
+    await medicine.save();
+    
+    // Populate references
+    await medicine.populate('category', 'name');
+    await medicine.populate('seller', 'name');
+    
+    res.status(201).json(medicine);
+  } catch (err) {
+    console.error('Error in createMedicine:', err);
+    res.status(400).json({ error: err.message });
+  }
+}
+
+// Update medicine (seller/admin only)
+async function updateMedicine(req, res) {
+  console.log('updateMedicine called');
+  try {
+    const medicine = await Medicine.findById(req.params.id);
+    
+    if (!medicine) {
+      return res.status(404).json({ error: 'Medicine not found' });
+    }
+    
+    // Check if user is authorized to update this medicine
+    if (req.user.role !== 'admin' && medicine.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to update this medicine' });
+    }
+    
+    Object.assign(medicine, req.body);
+    await medicine.save();
+    
+    // Populate references
+    await medicine.populate('category', 'name');
+    await medicine.populate('seller', 'name');
+    
+    res.json(medicine);
+  } catch (err) {
+    console.error('Error in updateMedicine:', err);
+    res.status(400).json({ error: err.message });
+  }
+}
+
+// Delete medicine (seller/admin only)
+async function deleteMedicine(req, res) {
+  console.log('deleteMedicine called');
+  try {
+    const medicine = await Medicine.findById(req.params.id);
+    
+    if (!medicine) {
+      return res.status(404).json({ error: 'Medicine not found' });
+    }
+    
+    // Check if user is authorized to delete this medicine
+    if (req.user.role !== 'admin' && medicine.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to delete this medicine' });
+    }
+    
+    await Medicine.findByIdAndDelete(req.params.id);
+    
+    res.json({ message: 'Medicine deleted successfully' });
+  } catch (err) {
+    console.error('Error in deleteMedicine:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = {
+  getMedicines,
+  getMedicineById,
+  getDiscountedMedicines,
+  createMedicine,
+  updateMedicine,
+  deleteMedicine
+};

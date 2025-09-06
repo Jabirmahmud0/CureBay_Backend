@@ -33,8 +33,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose_1 = __importStar(require("mongoose"));
-const CategorySchema = new mongoose_1.Schema({
+const mongoose = require("mongoose");
+
+const CategorySchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
@@ -56,4 +57,5 @@ const CategorySchema = new mongoose_1.Schema({
 }, {
     timestamps: true
 });
-exports.default = mongoose_1.default.model('Category', CategorySchema);
+
+module.exports = mongoose.model('Category', CategorySchema);

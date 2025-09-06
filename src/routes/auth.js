@@ -2,8 +2,9 @@
 
 const express = require('express');
 const router = express.Router();
-const { verifyToken } = require('../controllers/authController');
+const { verifyToken, syncFirebaseUser } = require('../controllers/authController');
 const User = require('../models/User');
+const UserSyncService = require('../services/userSyncService');
 
 
 // POST /api/auth/firebase-login
@@ -13,45 +14,26 @@ router.post('/firebase-login', async (req, res) => {
   try {
     // Verify Firebase ID token
     const decoded = await verifyToken(idToken);
-    // Find or create user in MongoDB
-    let user = await User.findOne({ email: decoded.email });
-    const name = decoded.name || decoded.email.split('@')[0];
-    const username = name;
-    const profilePicture = decoded.picture || null;
-    const role = 'user';
-    const isActive = true;
-    if (!user) {
-      user = await User.create({
-        name,
-        username,
-        email: decoded.email,
-        password: 'firebase-auth', // Placeholder, not used
-        role,
-        profilePicture,
-        isActive
-      });
-    } else {
-      // Patch missing fields
-      let needsUpdate = false;
-      const updateFields = {};
-      if (!user.name) { updateFields.name = name; needsUpdate = true; }
-      if (!user.username) { updateFields.username = username; needsUpdate = true; }
-      if (!user.role) { updateFields.role = role; needsUpdate = true; }
-      if (user.profilePicture === undefined) { updateFields.profilePicture = profilePicture; needsUpdate = true; }
-      if (user.isActive === undefined) { updateFields.isActive = isActive; needsUpdate = true; }
-      if (needsUpdate) {
-        await User.updateOne({ _id: user._id }, { $set: updateFields });
-        user = await User.findById(user._id); // Refresh user
-      }
+    
+    // Sync Firebase user with MongoDB using the service
+    const user = await UserSyncService.syncUser(decoded);
+    
+    // Validate user session
+    const validationResult = UserSyncService.validateUserSession(user);
+    if (!validationResult.isValid) {
+      return res.status(401).json({ error: validationResult.reason });
     }
+    
     res.json({
       message: 'Login successful',
       user: {
         _id: user._id,
+        name: user.name,
         username: user.username,
         email: user.email,
         role: user.role,
-        profilePicture: user.profilePicture
+        profilePicture: user.profilePicture,
+        isActive: user.isActive
       }
     });
   } catch (err) {
