@@ -7,7 +7,8 @@ const {
   getBannerById, 
   createBanner, 
   updateBanner, 
-  deleteBanner 
+  deleteBanner,
+  toggleBannerStatus
 } = require('../controllers/bannerController');
 const { syncUser } = require('../middleware/userSync');
 
@@ -26,5 +27,6 @@ router.get('/:id', (req, res) => {
 router.post('/', syncUser, createBanner);
 router.put('/:id', syncUser, updateBanner);
 router.delete('/:id', syncUser, deleteBanner);
+router.patch('/:id/toggle-status', syncUser, toggleBannerStatus);
 
 module.exports = router;

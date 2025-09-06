@@ -26,7 +26,19 @@ const BannerSchema = new mongoose.Schema({
         default: 0
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Add a virtual property to maintain frontend compatibility
+BannerSchema.virtual('isActive').get(function() {
+    return this.active;
+});
+
+// Add a virtual setter to maintain frontend compatibility
+BannerSchema.virtual('isActive').set(function(value) {
+    this.active = value;
 });
 
 module.exports = mongoose.model('Banner', BannerSchema);

@@ -96,10 +96,31 @@ async function deleteBanner(req, res) {
     }
 }
 
+// Toggle banner active status (admin only)
+async function toggleBannerStatus(req, res) {
+    console.log('toggleBannerStatus called');
+    try {
+        const banner = await Banner.findById(req.params.id);
+        
+        if (!banner) {
+            return res.status(404).json({ error: 'Banner not found' });
+        }
+        
+        banner.active = !banner.active;
+        await banner.save();
+        
+        res.json(banner);
+    } catch (err) {
+        console.error('Error in toggleBannerStatus:', err);
+        res.status(500).json({ error: err.message });
+    }
+}
+
 module.exports = {
     getBanners,
     getBannerById,
     createBanner,
     updateBanner,
-    deleteBanner
+    deleteBanner,
+    toggleBannerStatus
 };

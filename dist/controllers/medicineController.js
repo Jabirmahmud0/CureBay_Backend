@@ -18,9 +18,25 @@ async function getMedicines(req, res) {
         if (inStock !== null) {
             filter.inStock = inStock;
         }
-        // Filter by category
+        // Filter by category - validate that it's a valid MongoDB ObjectId
         if (category) {
-            filter.category = category;
+            // Validate category ID format (basic MongoDB ObjectId check)
+            const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+            if (objectIdRegex.test(category)) {
+                filter.category = category;
+            }
+            else {
+                // If category is not a valid ObjectId, return empty results
+                return res.json({
+                    medicines: [],
+                    pagination: {
+                        page,
+                        limit,
+                        total: 0,
+                        pages: 0
+                    }
+                });
+            }
         }
         // Filter by search term
         if (search) {

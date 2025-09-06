@@ -58,7 +58,19 @@ const HeroSlideSchema = new mongoose.Schema({
         default: 0
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Add a virtual property to maintain frontend compatibility
+HeroSlideSchema.virtual('isActive').get(function() {
+    return this.active;
+});
+
+// Add a virtual setter to maintain frontend compatibility
+HeroSlideSchema.virtual('isActive').set(function(value) {
+    this.active = value;
 });
 
 module.exports = mongoose.model('HeroSlide', HeroSlideSchema);

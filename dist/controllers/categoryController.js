@@ -6,7 +6,23 @@ async function getCategories(req, res) {
     try {
         const categories = await Category.find({ isActive: true }).sort({ name: 1 });
         console.log(`Found ${categories.length} categories`);
-        res.json(categories);
+        // Get medicine counts for each category
+        const Medicine = require('../models/Medicine');
+        console.log('Medicine model loaded:', !!Medicine);
+        const categoriesWithCount = await Promise.all(categories.map(async (category) => {
+            console.log(`Processing category: ${category.name} with ID: ${category._id}`);
+            // Ensure we're using the proper ObjectId for comparison
+            const count = await Medicine.countDocuments({
+                category: category._id
+            });
+            console.log(`Count for ${category.name}: ${count}`);
+            const categoryObj = category.toObject();
+            categoryObj.count = count;
+            console.log(`Category object with count:`, categoryObj);
+            return categoryObj;
+        }));
+        console.log('Categories with medicine counts prepared:', categoriesWithCount);
+        res.json(categoriesWithCount);
     }
     catch (err) {
         console.error('Error in getCategories:', err);
@@ -17,6 +33,12 @@ async function getCategories(req, res) {
 async function getCategoryById(req, res) {
     console.log(`getCategoryById controller called with id: ${req.params.id}`);
     try {
+        // Validate category ID format (basic MongoDB ObjectId check)
+        const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+        if (!req.params.id || !objectIdRegex.test(req.params.id)) {
+            console.log('Invalid category ID format');
+            return res.status(400).json({ error: 'Invalid category ID' });
+        }
         const category = await Category.findById(req.params.id);
         if (!category) {
             console.log('Category not found');

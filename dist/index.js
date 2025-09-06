@@ -11,20 +11,35 @@ const medicineRoutes = require('./routes/medicines');
 const categoryRoutes = require('./routes/categories');
 const heroSlideRoutes = require('./routes/heroSlides');
 const bannerRoutes = require('./routes/banners');
+console.log('Starting server...');
 // Load environment variables
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-// Add request logging middleware after middleware but before routes
-app.use((req, res, next) => {
+// Add request logging middleware at the very beginning
+console.log('Adding request logging middleware');
+const requestLogger = (req, res, next) => {
+    console.log('=== MIDDLEWARE EXECUTION START ===');
     console.log(`[REQUEST] ${req.method} ${req.path}`);
+    console.log('Request headers:', req.headers);
+    console.log('=== MIDDLEWARE EXECUTION END ===');
     next();
-});
+};
+app.use(requestLogger);
+console.log('Request logging middleware added');
+// Middleware
+console.log('Adding cors middleware');
+app.use(cors());
+console.log('Cors middleware added');
+console.log('Adding express.json middleware');
+app.use(express.json());
+console.log('Express.json middleware added');
+console.log('Adding express.urlencoded middleware');
+app.use(express.urlencoded({ extended: true }));
+console.log('Express.urlencoded middleware added');
+console.log('Adding express.static middleware');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+console.log('Express.static middleware added');
 // Routes
 app.get('/', (req, res) => {
     console.log('Handling root request');
@@ -35,17 +50,16 @@ app.get('/api/test', (req, res) => {
     console.log('Handling test request');
     res.json({ message: 'Test route working!' });
 });
-// Database connection
-async function connectDB() {
-    try {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/curebay');
-        console.log('MongoDB connected successfully');
-    }
-    catch (error) {
-        console.error('MongoDB connection error:', error);
-        process.exit(1);
-    }
-}
+// Test route to check middleware
+app.get('/api/middleware-test', (req, res) => {
+    console.log('Handling middleware test request');
+    res.json({ message: 'Middleware test route working!' });
+});
+// Add specific test routes to check if the mounting is working
+app.get('/api/hero-slides-test', (req, res) => {
+    console.log('Test route for hero-slides accessed');
+    res.json({ message: 'Hero slides test route working!' });
+});
 // Log when routes are registered
 console.log('Registering routes...');
 app.use('/api/auth', authRoutes);
@@ -58,24 +72,16 @@ app.use('/api/medicines', medicineRoutes);
 console.log('Registered /api/medicines routes');
 app.use('/api/categories', categoryRoutes);
 console.log('Registered /api/categories routes');
+// Register hero-slides routes with more specific path
 app.use('/api/hero-slides', heroSlideRoutes);
 console.log('Registered /api/hero-slides routes with heroSlideRoutes:', !!heroSlideRoutes);
+// Register banners routes with more specific path
 app.use('/api/banners', bannerRoutes);
 console.log('Registered /api/banners routes with bannerRoutes:', !!bannerRoutes);
-// Add a test route to check if the route registration is working
-app.get('/api/hero-slides/test', (req, res) => {
-    console.log('Test route for hero-slides accessed');
-    res.json({ message: 'Hero slides test route working!' });
-});
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!' });
-});
-// 404 handler
-app.use((req, res) => {
-    console.log(`[404] Route not found: ${req.method} ${req.path}`);
-    res.status(404).json({ message: 'Route not found' });
 });
 // Start server
 async function startServer() {
@@ -85,3 +91,19 @@ async function startServer() {
     });
 }
 startServer();
+// Database connection
+async function connectDB() {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/curebay');
+        console.log('MongoDB connected successfully');
+    }
+    catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+}
+// 404 handler - this should be the last middleware
+app.use((req, res) => {
+    console.log(`[404] Route not found: ${req.method} ${req.path}`);
+    res.status(404).json({ message: 'Route not found' });
+});

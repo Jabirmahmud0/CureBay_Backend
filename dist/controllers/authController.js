@@ -4,10 +4,23 @@ const User = require('../models/User');
 // Example: Verify a Firebase ID token
 async function verifyToken(idToken) {
     try {
+        console.log('Attempting to verify token with Firebase Admin SDK');
+        console.log('Firebase apps count:', admin.apps.length);
+        if (admin.apps.length > 0) {
+            console.log('Default app name:', admin.app().name);
+            console.log('Default app options:', admin.app().options);
+        }
+        // Check if auth is available
+        const auth = admin.auth();
+        console.log('Firebase Auth instance obtained:', !!auth);
         const decodedToken = await admin.auth().verifyIdToken(idToken);
+        console.log('Token verified successfully');
         return decodedToken;
     }
     catch (error) {
+        console.error('Error verifying token:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
         throw error;
     }
 }

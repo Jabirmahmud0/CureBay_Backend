@@ -120,10 +120,40 @@ async function deleteHeroSlide(req, res) {
     }
 }
 
+// Toggle hero slide active status (admin only)
+async function toggleHeroSlideStatus(req, res) {
+    console.log('toggleHeroSlideStatus called');
+    try {
+        const slide = await HeroSlide.findById(req.params.id);
+        
+        if (!slide) {
+            return res.status(404).json({ error: 'Hero slide not found' });
+        }
+        
+        slide.active = !slide.active;
+        await slide.save();
+        
+        // Populate references
+        await slide.populate({
+            path: 'featured.medicine',
+            populate: [
+                { path: 'category', select: 'name' },
+                { path: 'seller', select: 'name' }
+            ]
+        });
+        
+        res.json(slide);
+    } catch (err) {
+        console.error('Error in toggleHeroSlideStatus:', err);
+        res.status(500).json({ error: err.message });
+    }
+}
+
 module.exports = {
     getHeroSlides,
     getHeroSlideById,
     createHeroSlide,
     updateHeroSlide,
-    deleteHeroSlide
+    deleteHeroSlide,
+    toggleHeroSlideStatus
 };

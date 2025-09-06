@@ -38,6 +38,13 @@ async function getCategories(req, res) {
 async function getCategoryById(req, res) {
   console.log(`getCategoryById controller called with id: ${req.params.id}`);
   try {
+    // Validate category ID format (basic MongoDB ObjectId check)
+    const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+    if (!req.params.id || !objectIdRegex.test(req.params.id)) {
+      console.log('Invalid category ID format');
+      return res.status(400).json({ error: 'Invalid category ID' });
+    }
+    
     const category = await Category.findById(req.params.id);
     if (!category) {
       console.log('Category not found');

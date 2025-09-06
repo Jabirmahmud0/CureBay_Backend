@@ -7,7 +7,8 @@ const {
   getHeroSlideById, 
   createHeroSlide, 
   updateHeroSlide, 
-  deleteHeroSlide 
+  deleteHeroSlide,
+  toggleHeroSlideStatus
 } = require('../controllers/heroSlideController');
 const { syncUser } = require('../middleware/userSync');
 
@@ -32,5 +33,6 @@ router.get('/:id', (req, res) => {
 router.post('/', syncUser, createHeroSlide);
 router.put('/:id', syncUser, updateHeroSlide);
 router.delete('/:id', syncUser, deleteHeroSlide);
+router.patch('/:id/toggle-status', syncUser, toggleHeroSlideStatus);
 
 module.exports = router;
