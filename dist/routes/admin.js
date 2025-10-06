@@ -4,9 +4,10 @@ const router = express.Router();
 const User = require('../models/User');
 const Medicine = require('../models/Medicine');
 const Order = require('../models/Order');
-const { syncUser } = require('../middleware/userSync');
+const { syncUser, validateUserSession } = require('../middleware/userSync');
 // Apply sync middleware to all routes in this file to ensure authentication
-router.use(syncUser);
+// Use validateUserSession for frequent checks where full sync is not needed
+router.use(validateUserSession);
 // Middleware to check if user is admin
 const requireAdmin = (req, res, next) => {
     if (!req.user || req.user.role !== 'admin') {

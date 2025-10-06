@@ -21,7 +21,7 @@ async function getCategories(req, res) {
       });
       console.log(`Count for ${category.name}: ${count}`);
       const categoryObj = category.toObject();
-      categoryObj.count = count;
+      categoryObj.medicineCount = count; // Use medicineCount instead of count
       console.log(`Category object with count:`, categoryObj);
       return categoryObj;
     }));
@@ -58,6 +58,44 @@ async function getCategoryById(req, res) {
     res.json(category);
   } catch (err) {
     console.error('Error in getCategoryById:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// Get category by name
+async function getCategoryByName(req, res) {
+  console.log(`getCategoryByName controller called with name: ${req.params.name}`);
+  try {
+    // Decode the category name in case it was encoded
+    const categoryName = decodeURIComponent(req.params.name);
+    console.log(`Searching for category with name: ${categoryName}`);
+    
+    // Use case-insensitive search for category name
+    const category = await Category.findOne({ 
+      name: { $regex: new RegExp(`^${categoryName}$`, 'i') },
+      isActive: true 
+    });
+    
+    if (!category) {
+      console.log('Category not found');
+      return res.status(404).json({ error: 'Category not found' });
+    }
+    
+    console.log('Category found:', category.name);
+    
+    // Get medicine count for this category
+    const Medicine = require('../models/Medicine');
+    const count = await Medicine.countDocuments({ 
+      category: category._id 
+    });
+    
+    const categoryObj = category.toObject();
+    categoryObj.medicineCount = count; // Use medicineCount instead of count
+    console.log(`Category object with count:`, categoryObj);
+    
+    res.json(categoryObj);
+  } catch (err) {
+    console.error('Error in getCategoryByName:', err);
     res.status(500).json({ error: err.message });
   }
 }
@@ -113,6 +151,7 @@ async function deleteCategory(req, res) {
 module.exports = {
   getCategories,
   getCategoryById,
+  getCategoryByName,
   createCategory,
   updateCategory,
   deleteCategory

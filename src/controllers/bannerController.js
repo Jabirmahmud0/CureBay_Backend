@@ -17,8 +17,20 @@ async function getBanners(req, res) {
         }
         
         // Get banners
-        const banners = await Banner.find(filter)
+        let banners = await Banner.find(filter)
             .sort({ order: 1, createdAt: -1 });
+        
+        // Apply date range filtering on active banners
+        if (active === true) {
+            const now = new Date();
+            banners = banners.filter(banner => {
+                const startDate = banner.startDate ? new Date(banner.startDate) : null;
+                const endDate = banner.endDate ? new Date(banner.endDate) : null;
+                
+                return (!startDate || now >= startDate) && 
+                       (!endDate || now <= endDate);
+            });
+        }
         
         res.json(banners);
     } catch (err) {
@@ -48,7 +60,14 @@ async function getBannerById(req, res) {
 async function createBanner(req, res) {
     console.log('createBanner called');
     try {
-        const banner = new Banner(req.body);
+        // Map priority to order if provided
+        const bannerData = { ...req.body };
+        if (bannerData.priority !== undefined) {
+            bannerData.order = bannerData.priority;
+            delete bannerData.priority;
+        }
+        
+        const banner = new Banner(bannerData);
         await banner.save();
         res.status(201).json(banner);
     } catch (err) {
@@ -67,7 +86,14 @@ async function updateBanner(req, res) {
             return res.status(404).json({ error: 'Banner not found' });
         }
         
-        Object.assign(banner, req.body);
+        // Map priority to order if provided
+        const updateData = { ...req.body };
+        if (updateData.priority !== undefined) {
+            updateData.order = updateData.priority;
+            delete updateData.priority;
+        }
+        
+        Object.assign(banner, updateData);
         await banner.save();
         
         res.json(banner);
@@ -116,11 +142,36 @@ async function toggleBannerStatus(req, res) {
     }
 }
 
+// Update banner priority (admin only)
+async function updateBannerPriority(req, res) {
+    console.log('updateBannerPriority called');
+    try {
+        const banner = await Banner.findById(req.params.id);
+        
+        if (!banner) {
+            return res.status(404).json({ error: 'Banner not found' });
+        }
+        
+        // Update order field (priority)
+        if (req.body.priority !== undefined) {
+            banner.order = req.body.priority;
+        }
+        
+        await banner.save();
+        
+        res.json(banner);
+    } catch (err) {
+        console.error('Error in updateBannerPriority:', err);
+        res.status(400).json({ error: err.message });
+    }
+}
+
 module.exports = {
     getBanners,
     getBannerById,
     createBanner,
     updateBanner,
     deleteBanner,
-    toggleBannerStatus
+    toggleBannerStatus,
+    updateBannerPriority
 };

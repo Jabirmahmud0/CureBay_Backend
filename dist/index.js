@@ -11,22 +11,32 @@ const medicineRoutes = require('./routes/medicines');
 const categoryRoutes = require('./routes/categories');
 const heroSlideRoutes = require('./routes/heroSlides');
 const bannerRoutes = require('./routes/banners');
+const statsRoutes = require('./routes/stats');  // Comment out stats routes
+const orderRoutes = require('./routes/orders');
+const Medicine = require('./models/Medicine');
+const User = require('./models/User');
+const Order = require('./models/Order');
 console.log('Starting server...');
 // Load environment variables
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Add request logging middleware at the very beginning
-console.log('Adding request logging middleware');
-const requestLogger = (req, res, next) => {
-    console.log('=== MIDDLEWARE EXECUTION START ===');
-    console.log(`[REQUEST] ${req.method} ${req.path}`);
-    console.log('Request headers:', req.headers);
-    console.log('=== MIDDLEWARE EXECUTION END ===');
-    next();
-};
-app.use(requestLogger);
-console.log('Request logging middleware added');
+
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'Test endpoint working' });
+});
+
+// Completely new endpoint to test routing
+app.get('/api/stats-new', async (req, res) => {
+    try {
+        res.json({ products: 300, customers: 1500, support: 30, message: 'New stats endpoint working' });
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
 // Middleware
 console.log('Adding cors middleware');
 app.use(cors());
@@ -40,28 +50,18 @@ console.log('Express.urlencoded middleware added');
 console.log('Adding express.static middleware');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 console.log('Express.static middleware added');
-// Routes
-app.get('/', (req, res) => {
-    console.log('Handling root request');
-    res.json({ message: 'CureBay API Server is running!' });
+// Add a simple test endpoint at the very beginning to verify routing works
+app.get('/api/test-routing', (req, res) => {
+    res.json({ message: 'Routing is working' });
 });
-// Test route
-app.get('/api/test', (req, res) => {
-    console.log('Handling test request');
-    res.json({ message: 'Test route working!' });
-});
-// Test route to check middleware
-app.get('/api/middleware-test', (req, res) => {
-    console.log('Handling middleware test request');
-    res.json({ message: 'Middleware test route working!' });
-});
-// Add specific test routes to check if the mounting is working
-app.get('/api/hero-slides-test', (req, res) => {
-    console.log('Test route for hero-slides accessed');
-    res.json({ message: 'Hero slides test route working!' });
-});
-// Log when routes are registered
-console.log('Registering routes...');
+// Register routes early
+// Debug: Log what we're about to register
+console.log('About to register stats routes:', typeof statsRoutes);
+console.log('Stats routes keys:', Object.keys(statsRoutes || {}));
+// Register orders routes
+app.use('/api/orders', orderRoutes);
+console.log('Registered /api/orders routes');
+// Other routes
 app.use('/api/auth', authRoutes);
 console.log('Registered /api/auth routes');
 app.use('/api/users', userRoutes);
@@ -72,13 +72,47 @@ app.use('/api/medicines', medicineRoutes);
 console.log('Registered /api/medicines routes');
 app.use('/api/categories', categoryRoutes);
 console.log('Registered /api/categories routes');
-// Register hero-slides routes with more specific path
 app.use('/api/hero-slides', heroSlideRoutes);
-console.log('Registered /api/hero-slides routes with heroSlideRoutes:', !!heroSlideRoutes);
-// Register banners routes with more specific path
+console.log('Registered /api/hero-slides routes');
 app.use('/api/banners', bannerRoutes);
-console.log('Registered /api/banners routes with bannerRoutes:', !!bannerRoutes);
-// Error handling middleware
+console.log('Registered /api/banners routes');
+// Root route
+app.get('/', (req, res) => {
+    console.log('Handling root request');
+    res.json({ message: 'CureBay API Server is running!' });
+});
+
+// ADD THE STATS ENDPOINT HERE
+app.get('/api/stats', async (req, res) => {
+    console.log('Stats endpoint accessed');
+    try {
+        // Import models here since they're not available in the dist scope
+        const Medicine = require('./models/Medicine');
+        const User = require('./models/User');
+        const Order = require('./models/Order');
+        
+        const products = await Medicine.countDocuments();
+        const customers = await User.countDocuments();
+        const support = await Order.countDocuments();
+        
+        res.json({ products, customers, support });
+    } catch (error) {
+        console.error('Error in stats endpoint:', error);
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
+// Debug middleware to see what routes are being hit
+app.use((req, res, next) => {
+    console.log('Debug middleware hit:', req.method, req.path);
+    next();
+});
+// Move 404 handler to the end - this should be the last middleware
+app.use((req, res) => {
+    console.log(`[404] Route not found: ${req.method} ${req.path}`);
+    res.status(404).json({ message: 'Route not found' });
+});
+// Error handling middleware - should be just before starting server
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!' });
@@ -102,8 +136,4 @@ async function connectDB() {
         process.exit(1);
     }
 }
-// 404 handler - this should be the last middleware
-app.use((req, res) => {
-    console.log(`[404] Route not found: ${req.method} ${req.path}`);
-    res.status(404).json({ message: 'Route not found' });
-});
+module.exports = app;

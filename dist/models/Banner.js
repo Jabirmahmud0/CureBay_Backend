@@ -24,8 +24,34 @@ const BannerSchema = new mongoose.Schema({
     order: {
         type: Number,
         default: 0
+    },
+    startDate: {
+        type: Date,
+        default: null
+    },
+    endDate: {
+        type: Date,
+        default: null
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+// Add a virtual property to maintain frontend compatibility
+BannerSchema.virtual('isActive').get(function () {
+    return this.active;
+});
+// Add a virtual setter to maintain frontend compatibility
+BannerSchema.virtual('isActive').set(function (value) {
+    this.active = value;
+});
+// Add a virtual property for priority to maintain frontend compatibility
+BannerSchema.virtual('priority').get(function () {
+    return this.order;
+});
+// Add a virtual setter for priority to maintain frontend compatibility
+BannerSchema.virtual('priority').set(function (value) {
+    this.order = value;
 });
 module.exports = mongoose.model('Banner', BannerSchema);

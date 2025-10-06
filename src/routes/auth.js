@@ -10,8 +10,11 @@ const UserSyncService = require('../services/userSyncService');
 // POST /api/auth/firebase-login
 router.post('/firebase-login', async (req, res) => {
   console.log('Received request to /api/auth/firebase-login');
-  const { idToken } = req.body;
+  const { idToken, uid, email, name, profilePicture } = req.body;
   console.log('ID Token received:', idToken ? 'Present' : 'Missing');
+  
+  // Prepare user data object
+  const userData = { uid, email, name, profilePicture };
   
   if (!idToken) {
     console.log('No ID token provided in request');
@@ -20,8 +23,8 @@ router.post('/firebase-login', async (req, res) => {
   
   try {
     console.log('Attempting to verify Firebase ID token');
-    // Verify Firebase ID token
-    const decoded = await verifyToken(idToken);
+    // Verify Firebase ID token, passing user data for development mode
+    const decoded = await verifyToken(idToken, userData);
     console.log('Firebase ID token verified successfully');
     
     // Sync Firebase user with MongoDB using the service
