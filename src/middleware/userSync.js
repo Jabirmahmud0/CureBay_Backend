@@ -16,24 +16,37 @@ const sanitizeEmail = (email) => {
  */
 async function syncUser(req, res, next) {
   try {
+    console.log('syncUser middleware called');
+    
+    // If devAuth has already attached a user, skip token verification
+    if (req.user && req.firebaseUser) {
+      console.log('User already attached by devAuth, skipping token verification');
+      return next();
+    }
+    
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No valid authorization header found');
       return res.status(401).json({ error: 'No token provided' });
     }
     
     const idToken = authHeader.split(' ')[1];
+    console.log('Token extracted from header');
     
     // Verify and decode the token
     const decoded = await verifyToken(idToken, null);
+    console.log('Token decoded:', decoded);
     
     // Validate decoded token data
     if (!decoded || !decoded.email) {
+      console.log('Invalid token data');
       return res.status(401).json({ error: 'Invalid token data' });
     }
     
     // Sanitize email
     const sanitizedEmail = sanitizeEmail(decoded.email);
     if (!sanitizedEmail) {
+      console.log('Invalid email in token');
       return res.status(401).json({ error: 'Invalid email in token' });
     }
     
@@ -42,9 +55,11 @@ async function syncUser(req, res, next) {
     
     // Sync user data with Firebase using the service
     const user = await UserSyncService.syncUser(decoded);
+    console.log('User synced:', user);
     
     const validationResult = UserSyncService.validateUserSession(user);
     if (!validationResult.isValid) {
+      console.log('User session invalid:', validationResult.reason);
       return res.status(401).json({ error: validationResult.reason });
     }
     
@@ -52,6 +67,7 @@ async function syncUser(req, res, next) {
     req.user = user;
     req.firebaseUser = decoded;
     
+    console.log('User attached to request, proceeding to next middleware');
     next();
   } catch (err) {
     console.error('Authentication error:', err);
@@ -65,6 +81,12 @@ async function syncUser(req, res, next) {
  */
 async function validateUserSession(req, res, next) {
   try {
+    // If devAuth has already attached a user, skip token verification
+    if (req.user && req.firebaseUser) {
+      console.log('User already attached by devAuth, skipping token verification in validateUserSession');
+      return next();
+    }
+    
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No token provided' });

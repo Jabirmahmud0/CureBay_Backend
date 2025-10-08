@@ -1,356 +1,299 @@
+// Seed data for CureBay application
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const User = require('../src/models/User');
+const Category = require('../src/models/Category');
+const Medicine = require('../src/models/Medicine');
 const HeroSlide = require('../src/models/HeroSlide');
 const Banner = require('../src/models/Banner');
-const Medicine = require('../src/models/Medicine');
-const Category = require('../src/models/Category');
-const User = require('../src/models/User');
-
-dotenv.config();
+const Order = require('../src/models/Order');
+const Coupon = require('../src/models/Coupon');
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/curebay');
+mongoose.connect('mongodb://localhost:27017/curebay', {
+  // Remove deprecated options
+});
 
-// Sample hero slides data
-const heroSlides = [
+// Sample users
+const users = [
   {
-    title: "Summer Health Essentials",
-    subtitle: "Stay Healthy This Summer",
-    description: "Discover our curated selection of summer health products to keep you feeling your best all season long.",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&h=600&fit=crop&auto=format",
-    buttonText: "Shop Now",
-    buttonLink: "/shop",
-    active: true,
-    backgroundColor: "from-cyan-500 to-blue-500",
-    lightBackground: "from-cyan-50 to-blue-50",
-    textColor: "text-white",
-    lightTextColor: "text-gray-900",
-    order: 1
+    name: 'Admin User',
+    email: 'admin@curebay.com',
+    password: 'admin123',
+    role: 'admin',
+    phone: '+1234567890',
+    address: '123 Admin St, Admin City, Admin State 12345, Admin Country'
   },
   {
-    title: "Vitamins & Supplements",
-    subtitle: "Boost Your Immunity",
-    description: "Premium vitamins and supplements to support your overall health and well-being.",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1200&h=600&fit=crop&auto=format",
-    buttonText: "Explore Collection",
-    buttonLink: "/shop/category/supplements",
-    active: true,
-    backgroundColor: "from-purple-500 to-pink-500",
-    lightBackground: "from-purple-50 to-pink-50",
-    textColor: "text-white",
-    lightTextColor: "text-gray-900",
-    order: 2
+    name: 'Seller User',
+    email: 'seller@curebay.com',
+    password: 'seller123',
+    role: 'seller',
+    phone: '+1234567891',
+    address: '456 Seller St, Seller City, Seller State 67890, Seller Country'
   },
   {
-    title: "Prescription Medications",
-    subtitle: "Convenient & Secure",
-    description: "Get your prescriptions delivered right to your doorstep with our secure pharmacy service.",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=1200&h=600&fit=crop&auto=format",
-    buttonText: "Upload Prescription",
-    buttonLink: "/prescription",
-    active: true,
-    backgroundColor: "from-green-500 to-teal-500",
-    lightBackground: "from-green-50 to-teal-50",
-    textColor: "text-white",
-    lightTextColor: "text-gray-900",
-    order: 3
+    name: 'Customer User',
+    email: 'customer@curebay.com',
+    password: 'customer123',
+    role: 'user',
+    phone: '+1234567892',
+    address: '789 Customer St, Customer City, Customer State 54321, Customer Country'
   }
 ];
 
-// Sample banners data
-const banners = [
-  {
-    title: "Free Shipping on Orders Over $50",
-    description: "Limited time offer - Order now!",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1200&h=300&fit=crop&auto=format",
-    link: "/shop",
-    active: true,
-    order: 1
-  },
-  {
-    title: "Buy 2 Get 1 Free on Vitamins",
-    description: "Hurry, offer ends soon!",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&h=300&fit=crop&auto=format",
-    link: "/shop/category/vitamins",
-    active: true,
-    order: 2
-  },
-  {
-    title: "New Arrivals - Shop Now",
-    description: "Check out our latest health products",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=1200&h=300&fit=crop&auto=format",
-    link: "/new-arrivals",
-    active: true,
-    order: 3
-  }
-];
-
-// Sample categories - 20 diverse categories
+// Sample categories
 const categories = [
   { 
-    name: "Tablets", 
-    description: "Oral tablets for various health conditions",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop&auto=format"
+    name: 'Pain Relief', 
+    description: 'Medications for pain management',
+    image: 'https://placehold.co/300x300/4F46E5/FFFFFF?text=Pain+Relief'
   },
   { 
-    name: "Capsules", 
-    description: "Easy-to-swallow capsules with precise dosing",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop&auto=format"
+    name: 'Cold & Flu', 
+    description: 'Treatments for cold and flu symptoms',
+    image: 'https://placehold.co/300x300/0EA5E9/FFFFFF?text=Cold+%26+Flu'
   },
   { 
-    name: "Syrups", 
-    description: "Liquid medications for easy consumption",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=300&h=300&fit=crop&auto=format"
+    name: 'Vitamins & Supplements', 
+    description: 'Vitamins and dietary supplements',
+    image: 'https://placehold.co/300x300/10B981/FFFFFF?text=Vitamins'
   },
   { 
-    name: "Injections", 
-    description: "Injectable medications for immediate effect",
-    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&h=300&fit=crop&auto=format"
+    name: 'Digestive Health', 
+    description: 'Medications for digestive issues',
+    image: 'https://placehold.co/300x300/F59E0B/FFFFFF?text=Digestive'
   },
   { 
-    name: "Supplements", 
-    description: "Vitamins, minerals, and health supplements",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=300&fit=crop&auto=format"
+    name: 'Allergy', 
+    description: 'Allergy relief medications',
+    image: 'https://placehold.co/300x300/EF4444/FFFFFF?text=Allergy'
   },
   { 
-    name: "Ointments", 
-    description: "Topical treatments for skin conditions",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Drops", 
-    description: "Liquid medications for eyes, ears, and nose",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Inhalers", 
-    description: "Respiratory treatments for asthma and allergies",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Patches", 
-    description: "Transdermal patches for continuous medication delivery",
-    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Powders", 
-    description: "Powdered medications for mixing with liquids",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Suspensions", 
-    description: "Liquid suspensions for pediatric use",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Effervescent", 
-    description: "Fizzing tablets that dissolve in water",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Chewables", 
-    description: "Chewable tablets for easier consumption",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Lozenges", 
-    description: "Slow-dissolving tablets for throat relief",
-    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Sprays", 
-    description: "Metered sprays for nasal and oral applications",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Gels", 
-    description: "Topical gels for pain and inflammation",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Liquids", 
-    description: "Liquid formulations for easy dosing",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Suppositories", 
-    description: "Rectal medications for systemic delivery",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Nebulizers", 
-    description: "Liquid medications for nebulizer treatments",
-    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&h=300&fit=crop&auto=format"
-  },
-  { 
-    name: "Others", 
-    description: "Other medical products and equipment",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=300&fit=crop&auto=format"
+    name: 'Skin Care', 
+    description: 'Topical treatments and skincare products',
+    image: 'https://placehold.co/300x300/8B5CF6/FFFFFF?text=Skin+Care'
   }
 ];
 
 // Sample medicines
 const medicines = [
   {
-    name: "Paracetamol 500mg",
-    genericName: "Acetaminophen",
-    description: "Effective pain relief and fever reducer for adults and children",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop&auto=format",
-    company: "PharmaCorp",
-    massUnit: "500mg",
-    price: 25.99,
-    discountPercentage: 23,
+    name: 'Paracetamol 500mg',
+    genericName: 'Acetaminophen',
+    description: 'Effective pain reliever and fever reducer',
+    category: null, // Will be populated later
+    company: 'MediCorp',
+    massUnit: 'Tablet',
+    price: 5.99,
+    discountPercentage: 10,
+    seller: null, // Will be populated later
     inStock: true,
-    stockQuantity: 150
+    stockQuantity: 1000,
+    image: 'https://placehold.co/300x300/4F46E5/FFFFFF?text=Paracetamol'
   },
   {
-    name: "Cough Syrup 100ml",
-    genericName: "Dextromethorphan",
-    description: "Natural cough relief formula with honey and herbal extracts",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop&auto=format",
-    company: "MediCare",
-    massUnit: "100ml",
-    price: 18.50,
-    discountPercentage: 30,
+    name: 'Ibuprofen 200mg',
+    genericName: 'Ibuprofen',
+    description: 'Non-steroidal anti-inflammatory drug for pain and inflammation',
+    category: null,
+    company: 'PharmaPlus',
+    massUnit: 'Tablet',
+    price: 7.49,
+    discountPercentage: 0,
+    seller: null,
     inStock: true,
-    stockQuantity: 200
+    stockQuantity: 500,
+    image: 'https://placehold.co/300x300/0EA5E9/FFFFFF?text=Ibuprofen'
   },
   {
-    name: "Vitamin D3 Capsules",
-    genericName: "Cholecalciferol",
-    description: "Essential vitamin for bone health and immune system support",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=300&h=300&fit=crop&auto=format",
-    company: "HealthPlus",
-    massUnit: "1000 IU",
-    price: 32.00,
-    discountPercentage: 22,
+    name: 'Vitamin C 1000mg',
+    genericName: 'Ascorbic Acid',
+    description: 'Essential vitamin for immune system support',
+    category: null,
+    company: 'HealthFirst',
+    massUnit: 'Tablet',
+    price: 12.99,
+    discountPercentage: 15,
+    seller: null,
     inStock: true,
-    stockQuantity: 300
+    stockQuantity: 300,
+    image: 'https://placehold.co/300x300/10B981/FFFFFF?text=Vitamin+C'
   },
   {
-    name: "Antibiotic Capsules",
-    genericName: "Amoxicillin",
-    description: "Broad spectrum antibiotic treatment for bacterial infections",
-    image: "https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&h=300&fit=crop&auto=format",
-    company: "BioMed",
-    massUnit: "500mg",
-    price: 45.99,
-    discountPercentage: 24,
+    name: 'Loratadine 10mg',
+    genericName: 'Loratadine',
+    description: 'Non-drowsy antihistamine for allergy relief',
+    category: null,
+    company: 'AllergyCare',
+    massUnit: 'Tablet',
+    price: 8.99,
+    discountPercentage: 5,
+    seller: null,
     inStock: true,
-    stockQuantity: 120
+    stockQuantity: 400,
+    image: 'https://placehold.co/300x300/EF4444/FFFFFF?text=Loratadine'
   },
   {
-    name: "Pain Relief Gel",
-    genericName: "Diclofenac",
-    description: "Fast-acting topical pain relief gel for muscle and joint pain",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=300&fit=crop&auto=format",
-    company: "TopicalCare",
-    massUnit: "50g",
-    price: 22.99,
-    discountPercentage: 26,
+    name: 'Omeprazole 20mg',
+    genericName: 'Omeprazole',
+    description: 'Proton pump inhibitor for acid reflux and heartburn',
+    category: null,
+    company: 'DigestiveHealth',
+    massUnit: 'Capsule',
+    price: 15.99,
+    discountPercentage: 0,
+    seller: null,
     inStock: true,
-    stockQuantity: 180
-  },
-  {
-    name: "Multivitamin Tablets",
-    genericName: "Multivitamin Complex",
-    description: "Complete daily nutrition support with essential vitamins and minerals",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop&auto=format",
-    company: "VitaLife",
-    massUnit: "30 tablets",
-    price: 28.99,
-    discountPercentage: 24,
-    inStock: true,
-    stockQuantity: 250
-  },
-  {
-    name: "Omega-3 Fish Oil",
-    genericName: "Omega-3 Fatty Acids",
-    description: "Premium fish oil capsules for heart and brain health",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop&auto=format",
-    company: "MarineHealth",
-    massUnit: "1000mg",
-    price: 39.99,
-    discountPercentage: 25,
-    inStock: true,
-    stockQuantity: 400
-  },
-  {
-    name: "Insulin Pen",
-    genericName: "Human Insulin",
-    description: "Fast-acting insulin pen for diabetes management",
-    image: "https://images.unsplash.com/photo-1576602976047-174e57a47881?w=300&h=300&fit=crop&auto=format",
-    company: "DiabetCare",
-    massUnit: "100 units/ml",
-    price: 85.99,
-    discountPercentage: 19,
-    inStock: true,
-    stockQuantity: 75
+    stockQuantity: 250,
+    image: 'https://placehold.co/300x300/F59E0B/FFFFFF?text=Omeprazole'
   }
 ];
 
-async function seedDatabase() {
+// Sample hero slides
+const heroSlides = [
+  {
+    title: 'Summer Health Sale',
+    subtitle: 'Up to 30% Off',
+    description: 'Stay healthy this summer with our exclusive discounts on vitamins and supplements',
+    image: 'https://placehold.co/1200x400/4F46E5/FFFFFF?text=Summer+Health+Sale',
+    buttonText: 'Shop Now',
+    buttonLink: '/shop',
+    backgroundColor: 'from-cyan-600 to-cyan-800',
+    textColor: 'text-white',
+    isActive: true
+  },
+  {
+    title: 'New Arrivals',
+    subtitle: 'Fresh Stock Daily',
+    description: 'Discover our latest health and wellness products',
+    image: 'https://placehold.co/1200x400/0EA5E9/FFFFFF?text=New+Arrivals',
+    buttonText: 'Explore',
+    buttonLink: '/shop',
+    backgroundColor: 'from-blue-500 to-blue-700',
+    textColor: 'text-white',
+    isActive: true
+  }
+];
+
+// Sample banners
+const banners = [
+  {
+    title: 'Free Shipping',
+    description: 'On orders over $50',
+    image: 'https://placehold.co/300x200/10B981/FFFFFF?text=Free+Shipping',
+    link: '/shop',
+    priority: 1,
+    isActive: true,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+  },
+  {
+    title: 'Flash Sale',
+    description: 'Limited time offer - 25% off',
+    image: 'https://placehold.co/300x200/EF4444/FFFFFF?text=Flash+Sale',
+    link: '/discounts',
+    priority: 2,
+    isActive: true,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+  }
+];
+
+// Sample coupons
+const coupons = [
+  {
+    code: 'WELCOME10',
+    discountType: 'percentage',
+    discountValue: 10,
+    minimumOrderAmount: 25,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
+    isActive: true,
+    createdBy: null // Will be populated later
+  },
+  {
+    code: 'SAVE20',
+    discountType: 'percentage',
+    discountValue: 20,
+    minimumOrderAmount: 50,
+    maximumDiscountAmount: 25,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+    isActive: true,
+    createdBy: null
+  },
+  {
+    code: 'FREESHIP',
+    discountType: 'fixed',
+    discountValue: 10,
+    minimumOrderAmount: 30,
+    startDate: new Date(),
+    endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
+    isActive: true,
+    createdBy: null
+  }
+];
+
+// Seed function
+const seedDB = async () => {
   try {
     // Clear existing data
-    await HeroSlide.deleteMany({});
-    await Banner.deleteMany({});
+    await User.deleteMany({});
     await Category.deleteMany({});
     await Medicine.deleteMany({});
-    await User.deleteMany({});
+    await HeroSlide.deleteMany({});
+    await Banner.deleteMany({});
+    await Order.deleteMany({});
+    await Coupon.deleteMany({});
     
-    console.log('Existing data cleared');
+    // Create users
+    const createdUsers = await User.insertMany(users);
+    const adminUser = createdUsers.find(user => user.role === 'admin');
+    const sellerUser = createdUsers.find(user => user.role === 'seller');
     
-    // Create categories first
+    // Create categories
     const createdCategories = await Category.insertMany(categories);
-    console.log(`Created ${createdCategories.length} categories`);
-    
-    // Create a sample seller user
-    const sellerUser = await User.create({
-      name: "Pharma Seller",
-      email: "seller@example.com",
-      password: "password123",
-      role: "seller"
-    });
-    console.log('Created seller user');
     
     // Update medicines with category and seller references
-    const medicinesWithRefs = medicines.map((medicine, index) => ({
-      ...medicine,
-      category: createdCategories[index % createdCategories.length]._id,
-      seller: sellerUser._id
-    }));
+    medicines.forEach(medicine => {
+      medicine.category = createdCategories[0]._id; // Assign first category as default
+      medicine.seller = sellerUser._id;
+    });
     
     // Create medicines
-    const createdMedicines = await Medicine.insertMany(medicinesWithRefs);
-    console.log(`Created ${createdMedicines.length} medicines`);
+    const createdMedicines = await Medicine.insertMany(medicines);
     
-    // Update hero slides with featured medicine references
-    const heroSlidesWithRefs = heroSlides.map((slide, index) => {
-      if (index < createdMedicines.length) {
-        return {
-          ...slide,
-          featured: {
-            medicine: createdMedicines[index]._id
-          }
-        };
-      }
-      return slide;
+    // Update hero slides with seller reference
+    heroSlides.forEach(slide => {
+      slide.seller = sellerUser._id;
     });
     
     // Create hero slides
-    const createdHeroSlides = await HeroSlide.insertMany(heroSlidesWithRefs);
-    console.log(`Created ${createdHeroSlides.length} hero slides`);
+    await HeroSlide.insertMany(heroSlides);
+    
+    // Update banners with seller reference
+    banners.forEach(banner => {
+      banner.seller = sellerUser._id;
+    });
     
     // Create banners
-    const createdBanners = await Banner.insertMany(banners);
-    console.log(`Created ${createdBanners.length} banners`);
+    await Banner.insertMany(banners);
     
-    console.log('Database seeding completed successfully!');
-    process.exit(0);
+    // Update coupons with creator reference
+    coupons.forEach(coupon => {
+      coupon.createdBy = adminUser._id;
+    });
+    
+    // Create coupons
+    await Coupon.insertMany(coupons);
+    
+    console.log('Database seeded successfully!');
+    mongoose.connection.close();
   } catch (error) {
     console.error('Error seeding database:', error);
-    process.exit(1);
+    mongoose.connection.close();
   }
-}
+};
 
-seedDatabase();
+// Run seed function
+seedDB();

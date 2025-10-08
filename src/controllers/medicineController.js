@@ -106,24 +106,53 @@ async function getMedicineById(req, res) {
 
 // Get discounted medicines
 async function getDiscountedMedicines(req, res) {
-  console.log('getDiscountedMedicines called');
-  try {
-    const limit = parseInt(req.query.limit) || 8;
-    
-    // Get medicines with discount greater than 0
-    const medicines = await Medicine.find({ discountPercentage: { $gt: 0 } })
-      .populate('category', 'name')
-      .populate('seller', 'name')
-      .sort({ discountPercentage: -1, createdAt: -1 })
-      .limit(limit);
-    
-    res.json({
-      medicines
-    });
-  } catch (err) {
-    console.error('Error in getDiscountedMedicines:', err);
-    res.status(500).json({ error: err.message });
-  }
+    console.log('getDiscountedMedicines called');
+    try {
+        // Set a reasonable default and maximum limit
+        const defaultLimit = 12;
+        const maxLimit = 100;
+        let limit = parseInt(req.query.limit) || defaultLimit;
+        
+        // If no limit is specified or limit is 0, set to max limit
+        if (!req.query.limit || limit === 0) {
+            limit = maxLimit;
+        }
+        
+        // Ensure limit doesn't exceed maximum
+        if (limit > maxLimit) {
+            limit = maxLimit;
+        }
+        
+        // Get current date for time-based discount validation
+        const currentDate = new Date();
+        
+        // Get medicines with discount greater than 0
+        // Also ensure we only get medicines that are in stock
+        // And discount is currently active (within start and end dates if specified)
+        const medicines = await Medicine.find({ 
+            discountPercentage: { $gt: 0 },
+            inStock: true,
+            $or: [
+                { discountStartDate: null },
+                { discountStartDate: { $lte: currentDate } }
+            ],
+            $or: [
+                { discountEndDate: null },
+                { discountEndDate: { $gte: currentDate } }
+            ]
+        })
+          .populate('category', 'name')
+          .populate('seller', 'name')
+          .sort({ discountPercentage: -1, createdAt: -1 })
+          .limit(limit);
+        
+        res.json({
+            medicines
+        });
+    } catch (err) {
+        console.error('Error in getDiscountedMedicines:', err);
+        res.status(500).json({ error: err.message });
+    }
 }
 
 // Create new medicine (seller/admin only)
@@ -150,31 +179,41 @@ async function createMedicine(req, res) {
 
 // Update medicine (seller/admin only)
 async function updateMedicine(req, res) {
-  console.log('updateMedicine called');
-  try {
-    const medicine = await Medicine.findById(req.params.id);
-    
-    if (!medicine) {
-      return res.status(404).json({ error: 'Medicine not found' });
+    console.log('updateMedicine called');
+    try {
+        const medicine = await Medicine.findById(req.params.id);
+        
+        if (!medicine) {
+            return res.status(404).json({ error: 'Medicine not found' });
+        }
+        
+        // Check if user is authorized to update this medicine
+        if (req.user.role !== 'admin' && medicine.seller.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Not authorized to update this medicine' });
+        }
+        
+        // Handle discount date validation
+        if (req.body.discountStartDate && req.body.discountEndDate) {
+            const startDate = new Date(req.body.discountStartDate);
+            const endDate = new Date(req.body.discountEndDate);
+            
+            if (startDate > endDate) {
+                return res.status(400).json({ error: 'Discount start date must be before end date' });
+            }
+        }
+        
+        Object.assign(medicine, req.body);
+        await medicine.save();
+        
+        // Populate references
+        await medicine.populate('category', 'name');
+        await medicine.populate('seller', 'name');
+        
+        res.json(medicine);
+    } catch (err) {
+        console.error('Error in updateMedicine:', err);
+        res.status(400).json({ error: err.message });
     }
-    
-    // Check if user is authorized to update this medicine
-    if (req.user.role !== 'admin' && medicine.seller.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Not authorized to update this medicine' });
-    }
-    
-    Object.assign(medicine, req.body);
-    await medicine.save();
-    
-    // Populate references
-    await medicine.populate('category', 'name');
-    await medicine.populate('seller', 'name');
-    
-    res.json(medicine);
-  } catch (err) {
-    console.error('Error in updateMedicine:', err);
-    res.status(400).json({ error: err.message });
-  }
 }
 
 // Delete medicine (seller/admin only)
@@ -202,10 +241,10 @@ async function deleteMedicine(req, res) {
 }
 
 module.exports = {
-  getMedicines,
-  getMedicineById,
-  getDiscountedMedicines,
-  createMedicine,
-  updateMedicine,
-  deleteMedicine
+    getMedicines,
+    getMedicineById,
+    getDiscountedMedicines,
+    createMedicine,
+    updateMedicine,
+    deleteMedicine
 };

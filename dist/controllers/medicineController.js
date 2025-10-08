@@ -96,9 +96,35 @@ async function getMedicineById(req, res) {
 async function getDiscountedMedicines(req, res) {
     console.log('getDiscountedMedicines called');
     try {
-        const limit = parseInt(req.query.limit) || 8;
+        // Set a reasonable default and maximum limit
+        const defaultLimit = 12;
+        const maxLimit = 100;
+        let limit = parseInt(req.query.limit) || defaultLimit;
+        // If no limit is specified or limit is 0, set to max limit
+        if (!req.query.limit || limit === 0) {
+            limit = maxLimit;
+        }
+        // Ensure limit doesn't exceed maximum
+        if (limit > maxLimit) {
+            limit = maxLimit;
+        }
+        // Get current date for time-based discount validation
+        const currentDate = new Date();
         // Get medicines with discount greater than 0
-        const medicines = await Medicine.find({ discountPercentage: { $gt: 0 } })
+        // Also ensure we only get medicines that are in stock
+        // And discount is currently active (within start and end dates if specified)
+        const medicines = await Medicine.find({
+            discountPercentage: { $gt: 0 },
+            inStock: true,
+            $or: [
+                { discountStartDate: null },
+                { discountStartDate: { $lte: currentDate } }
+            ],
+            $or: [
+                { discountEndDate: null },
+                { discountEndDate: { $gte: currentDate } }
+            ]
+        })
             .populate('category', 'name')
             .populate('seller', 'name')
             .sort({ discountPercentage: -1, createdAt: -1 })
@@ -142,6 +168,14 @@ async function updateMedicine(req, res) {
         // Check if user is authorized to update this medicine
         if (req.user.role !== 'admin' && medicine.seller.toString() !== req.user._id.toString()) {
             return res.status(403).json({ error: 'Not authorized to update this medicine' });
+        }
+        // Handle discount date validation
+        if (req.body.discountStartDate && req.body.discountEndDate) {
+            const startDate = new Date(req.body.discountStartDate);
+            const endDate = new Date(req.body.discountEndDate);
+            if (startDate > endDate) {
+                return res.status(400).json({ error: 'Discount start date must be before end date' });
+            }
         }
         Object.assign(medicine, req.body);
         await medicine.save();

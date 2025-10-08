@@ -61,6 +61,21 @@ const MedicineSchema = new mongoose.Schema({
     isAdvertised: {
         type: Boolean,
         default: false
+    },
+    // Add time-based discount fields
+    discountStartDate: {
+        type: Date,
+        default: null
+    },
+    discountEndDate: {
+        type: Date,
+        default: null
+    },
+    // Add discount type field for future enhancements
+    discountType: {
+        type: String,
+        enum: ['percentage', 'fixed', 'buy_x_get_y'],
+        default: 'percentage'
     }
 }, {
     timestamps: true
