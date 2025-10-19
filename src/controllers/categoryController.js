@@ -4,71 +4,55 @@ const Category = require('../models/Category');
 
 // Get all categories
 async function getCategories(req, res) {
-  console.log('getCategories controller called');
   try {
     const categories = await Category.find({ isActive: true }).sort({ name: 1 });
-    console.log(`Found ${categories.length} categories`);
     
     // Get medicine counts for each category
     const Medicine = require('../models/Medicine');
-    console.log('Medicine model loaded:', !!Medicine);
     
     const categoriesWithCount = await Promise.all(categories.map(async (category) => {
-      console.log(`Processing category: ${category.name} with ID: ${category._id}`);
       // Ensure we're using the proper ObjectId for comparison
       const count = await Medicine.countDocuments({ 
         category: category._id 
       });
-      console.log(`Count for ${category.name}: ${count}`);
       const categoryObj = category.toObject();
       categoryObj.medicineCount = count; // Use medicineCount instead of count
-      console.log(`Category object with count:`, categoryObj);
       return categoryObj;
     }));
     
-    console.log('Categories with medicine counts prepared:', categoriesWithCount);
     res.json(categoriesWithCount);
   } catch (err) {
-    console.error('Error in getCategories:', err);
     res.status(500).json({ error: err.message });
   }
 }
 
 // Get category by ID
 async function getCategoryById(req, res) {
-  console.log(`getCategoryById controller called with id: ${req.params.id}`);
   try {
     // Validate category ID format (basic MongoDB ObjectId check)
     const objectIdRegex = /^[0-9a-fA-F]{24}$/;
     if (!req.params.id || !objectIdRegex.test(req.params.id)) {
-      console.log('Invalid category ID format');
       return res.status(400).json({ error: 'Invalid category ID' });
     }
     
     const category = await Category.findById(req.params.id);
     if (!category) {
-      console.log('Category not found');
       return res.status(404).json({ error: 'Category not found' });
     }
     if (!category.isActive) {
-      console.log('Category not available');
       return res.status(404).json({ error: 'Category not available' });
     }
-    console.log('Category found:', category.name);
     res.json(category);
   } catch (err) {
-    console.error('Error in getCategoryById:', err);
     res.status(500).json({ error: err.message });
   }
 }
 
 // Get category by name
 async function getCategoryByName(req, res) {
-  console.log(`getCategoryByName controller called with name: ${req.params.name}`);
   try {
     // Decode the category name in case it was encoded
     const categoryName = decodeURIComponent(req.params.name);
-    console.log(`Searching for category with name: ${categoryName}`);
     
     // Use case-insensitive search for category name
     const category = await Category.findOne({ 
@@ -77,11 +61,8 @@ async function getCategoryByName(req, res) {
     });
     
     if (!category) {
-      console.log('Category not found');
       return res.status(404).json({ error: 'Category not found' });
     }
-    
-    console.log('Category found:', category.name);
     
     // Get medicine count for this category
     const Medicine = require('../models/Medicine');
@@ -91,18 +72,15 @@ async function getCategoryByName(req, res) {
     
     const categoryObj = category.toObject();
     categoryObj.medicineCount = count; // Use medicineCount instead of count
-    console.log(`Category object with count:`, categoryObj);
     
     res.json(categoryObj);
   } catch (err) {
-    console.error('Error in getCategoryByName:', err);
     res.status(500).json({ error: err.message });
   }
 }
 
 // Create new category (admin only)
 async function createCategory(req, res) {
-  console.log('createCategory controller called');
   try {
     const category = new Category(req.body);
     await category.save();
@@ -114,7 +92,6 @@ async function createCategory(req, res) {
 
 // Update category (admin only)
 async function updateCategory(req, res) {
-  console.log('updateCategory controller called');
   try {
     const category = await Category.findByIdAndUpdate(
       req.params.id,
@@ -134,7 +111,6 @@ async function updateCategory(req, res) {
 
 // Delete category (admin only)
 async function deleteCategory(req, res) {
-  console.log('deleteCategory controller called');
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
     

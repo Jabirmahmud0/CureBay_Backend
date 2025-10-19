@@ -6,7 +6,7 @@ const User = require("../src/models/User"); // Your User model
 dotenv.config();
 
 // Connect ONLY ONCE
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/curebay";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/curebay";
 
 mongoose.connect(MONGO_URI)
   .then(async () => {

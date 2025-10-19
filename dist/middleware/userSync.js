@@ -16,51 +16,40 @@ const sanitizeEmail = (email) => {
  */
 async function syncUser(req, res, next) {
     try {
-        console.log('syncUser middleware called');
         // If devAuth has already attached a user, skip token verification
         if (req.user && req.firebaseUser) {
-            console.log('User already attached by devAuth, skipping token verification');
             return next();
         }
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            console.log('No valid authorization header found');
             return res.status(401).json({ error: 'No token provided' });
         }
         const idToken = authHeader.split(' ')[1];
-        console.log('Token extracted from header');
         // Verify and decode the token
         const decoded = await verifyToken(idToken, null);
-        console.log('Token decoded:', decoded);
         // Validate decoded token data
         if (!decoded || !decoded.email) {
-            console.log('Invalid token data');
             return res.status(401).json({ error: 'Invalid token data' });
         }
         // Sanitize email
         const sanitizedEmail = sanitizeEmail(decoded.email);
         if (!sanitizedEmail) {
-            console.log('Invalid email in token');
             return res.status(401).json({ error: 'Invalid email in token' });
         }
         // Update decoded token with sanitized email
         decoded.email = sanitizedEmail;
         // Sync user data with Firebase using the service
         const user = await UserSyncService.syncUser(decoded);
-        console.log('User synced:', user);
         const validationResult = UserSyncService.validateUserSession(user);
         if (!validationResult.isValid) {
-            console.log('User session invalid:', validationResult.reason);
             return res.status(401).json({ error: validationResult.reason });
         }
         // Attach user to request object
         req.user = user;
         req.firebaseUser = decoded;
-        console.log('User attached to request, proceeding to next middleware');
         next();
     }
     catch (err) {
-        console.error('Authentication error:', err);
         res.status(401).json({ error: 'Invalid or expired token' });
     }
 }
@@ -70,16 +59,30 @@ async function syncUser(req, res, next) {
  */
 async function validateUserSession(req, res, next) {
     try {
-        // If devAuth has already attached a user, skip token verification
-        if (req.user && req.firebaseUser) {
-            console.log('User already attached by devAuth, skipping token verification in validateUserSession');
+        console.log('validateUserSession called');
+        console.log('NODE_ENV:', process.env.NODE_ENV);
+        console.log('req.user:', req.user);
+        console.log('req.firebaseUser:', req.firebaseUser);
+        // Check if we're in development mode
+        const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+        console.log('isDev:', isDev);
+        // In development mode, allow requests without token to proceed to devAuth middleware
+        if (isDev) {
+            console.log('In development mode, allowing request to proceed to devAuth');
             return next();
         }
+        // If devAuth has already attached a user, skip token verification
+        if (req.user && req.firebaseUser) {
+            console.log('Skipping token verification - user already attached');
+            return next();
+        }
+        console.log('Not in development mode, checking for token');
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({ error: 'No token provided' });
         }
         const idToken = authHeader.split(' ')[1];
+        console.log('Token found, verifying...');
         // Verify and decode the token
         const decoded = await verifyToken(idToken, null);
         // Validate decoded token data
@@ -105,7 +108,7 @@ async function validateUserSession(req, res, next) {
         next();
     }
     catch (err) {
-        console.error('Authentication error:', err);
+        console.error('validateUserSession error:', err);
         res.status(401).json({ error: 'Invalid or expired token' });
     }
 }

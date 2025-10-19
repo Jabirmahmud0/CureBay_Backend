@@ -13,7 +13,6 @@ class UserSyncService {
             return await syncFirebaseUser(firebaseUser);
         }
         catch (error) {
-            console.error('Error syncing user:', error);
             throw error;
         }
     }
@@ -32,7 +31,6 @@ class UserSyncService {
             return user;
         }
         catch (error) {
-            console.error('Error getting user with sync:', error);
             throw error;
         }
     }

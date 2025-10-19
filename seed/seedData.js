@@ -1,5 +1,6 @@
 // Seed data for CureBay application
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const User = require('../src/models/User');
 const Category = require('../src/models/Category');
 const Medicine = require('../src/models/Medicine');
@@ -7,39 +8,13 @@ const HeroSlide = require('../src/models/HeroSlide');
 const Banner = require('../src/models/Banner');
 const Order = require('../src/models/Order');
 const Coupon = require('../src/models/Coupon');
+const Review = require('../src/models/Review');
+
+// Load environment variables
+dotenv.config();
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/curebay', {
-  // Remove deprecated options
-});
-
-// Sample users
-const users = [
-  {
-    name: 'Admin User',
-    email: 'admin@curebay.com',
-    password: 'admin123',
-    role: 'admin',
-    phone: '+1234567890',
-    address: '123 Admin St, Admin City, Admin State 12345, Admin Country'
-  },
-  {
-    name: 'Seller User',
-    email: 'seller@curebay.com',
-    password: 'seller123',
-    role: 'seller',
-    phone: '+1234567891',
-    address: '456 Seller St, Seller City, Seller State 67890, Seller Country'
-  },
-  {
-    name: 'Customer User',
-    email: 'customer@curebay.com',
-    password: 'customer123',
-    role: 'user',
-    phone: '+1234567892',
-    address: '789 Customer St, Customer City, Customer State 54321, Customer Country'
-  }
-];
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/curebay');
 
 // Sample categories
 const categories = [
@@ -179,7 +154,7 @@ const heroSlides = [
 const banners = [
   {
     title: 'Free Shipping',
-    description: 'On orders over $50',
+    description: 'On orders over ৳50',
     image: 'https://placehold.co/300x200/10B981/FFFFFF?text=Free+Shipping',
     link: '/shop',
     priority: 1,
@@ -237,22 +212,42 @@ const coupons = [
 // Seed function
 const seedDB = async () => {
   try {
-    // Clear existing data
-    await User.deleteMany({});
+    // Get existing users
+    const adminUser = await User.findOne({ email: 'admin@curebay.com' });
+    if (!adminUser) {
+      console.log('Admin user not found. Please run seedUsers.js first.');
+      mongoose.connection.close();
+      return;
+    }
+
+    // Create seller user if it doesn't exist
+    let sellerUser = await User.findOne({ email: 'seller@curebay.com' });
+    if (!sellerUser) {
+      sellerUser = await User.create({
+        name: 'Seller User',
+        email: 'seller@curebay.com',
+        password: 'seller123',
+        role: 'seller',
+        phone: '+1234567891',
+        address: '456 Seller St, Seller City, Seller State 67890, Seller Country'
+      });
+      console.log('Seller user created');
+    } else {
+      console.log('Seller user already exists');
+    }
+
+    // Clear existing data (except users)
     await Category.deleteMany({});
     await Medicine.deleteMany({});
     await HeroSlide.deleteMany({});
     await Banner.deleteMany({});
     await Order.deleteMany({});
     await Coupon.deleteMany({});
-    
-    // Create users
-    const createdUsers = await User.insertMany(users);
-    const adminUser = createdUsers.find(user => user.role === 'admin');
-    const sellerUser = createdUsers.find(user => user.role === 'seller');
+    await Review.deleteMany({});
     
     // Create categories
     const createdCategories = await Category.insertMany(categories);
+    console.log(`Created ${createdCategories.length} categories`);
     
     // Update medicines with category and seller references
     medicines.forEach(medicine => {
@@ -262,6 +257,7 @@ const seedDB = async () => {
     
     // Create medicines
     const createdMedicines = await Medicine.insertMany(medicines);
+    console.log(`Created ${createdMedicines.length} medicines`);
     
     // Update hero slides with seller reference
     heroSlides.forEach(slide => {
@@ -269,7 +265,8 @@ const seedDB = async () => {
     });
     
     // Create hero slides
-    await HeroSlide.insertMany(heroSlides);
+    const createdHeroSlides = await HeroSlide.insertMany(heroSlides);
+    console.log(`Created ${createdHeroSlides.length} hero slides`);
     
     // Update banners with seller reference
     banners.forEach(banner => {
@@ -277,7 +274,8 @@ const seedDB = async () => {
     });
     
     // Create banners
-    await Banner.insertMany(banners);
+    const createdBanners = await Banner.insertMany(banners);
+    console.log(`Created ${createdBanners.length} banners`);
     
     // Update coupons with creator reference
     coupons.forEach(coupon => {
@@ -285,9 +283,10 @@ const seedDB = async () => {
     });
     
     // Create coupons
-    await Coupon.insertMany(coupons);
+    const createdCoupons = await Coupon.insertMany(coupons);
+    console.log(`Created ${createdCoupons.length} coupons`);
     
-    console.log('Database seeded successfully!');
+    console.log('Database seeded successfully! Run seedReviews.js to seed review data.');
     mongoose.connection.close();
   } catch (error) {
     console.error('Error seeding database:', error);

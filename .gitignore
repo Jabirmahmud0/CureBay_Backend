@@ -1,5 +1,21 @@
 .env
 node_modules
 src/config/firebase-service-account.json
-# Firebase Service Account Template (SAFE TO COMMIT)
-src/config/firebase-service-account.template.json
+
+# Environment files
+.env.local
+.env.production
+.env.development
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Distribution files
+dist/
+
+# Uploads directory
+uploads/

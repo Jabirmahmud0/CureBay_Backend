@@ -13,7 +13,7 @@
     "seed:medicines": "node seed/seedMedicines.js",
     "seed:hero": "node seed/seedHero.js",
     "seed:discount": "node seed/seedDiscount.js",
-    "test:coupons": "node test-coupons.js",
+    "seed:reviews": "node seed/seedReviews.js",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },

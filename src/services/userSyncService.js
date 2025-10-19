@@ -12,7 +12,6 @@ class UserSyncService {
     try {
       return await syncFirebaseUser(firebaseUser);
     } catch (error) {
-      console.error('Error syncing user:', error);
       throw error;
     }
   }
@@ -32,7 +31,6 @@ class UserSyncService {
       const user = await User.findOne({ email });
       return user;
     } catch (error) {
-      console.error('Error getting user with sync:', error);
       throw error;
     }
   }

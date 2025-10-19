@@ -65,7 +65,7 @@ const CouponSchema = new mongoose.Schema({
     timestamps: true
 });
 // Index for better query performance
-CouponSchema.index({ code: 1 });
+// Removed duplicate index on code since unique: true already creates an index
 CouponSchema.index({ startDate: 1, endDate: 1 });
 CouponSchema.index({ isActive: 1 });
 module.exports = mongoose.model('Coupon', CouponSchema);

@@ -3,7 +3,6 @@ const Medicine = require('../models/Medicine');
 const User = require('../models/User');
 // Get all medicines with filtering and pagination
 async function getMedicines(req, res) {
-    console.log('getMedicines called');
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 12;
@@ -71,13 +70,11 @@ async function getMedicines(req, res) {
         });
     }
     catch (err) {
-        console.error('Error in getMedicines:', err);
         res.status(500).json({ error: err.message });
     }
 }
 // Get medicine by ID
 async function getMedicineById(req, res) {
-    console.log('getMedicineById called');
     try {
         const medicine = await Medicine.findById(req.params.id)
             .populate('category', 'name')
@@ -88,13 +85,11 @@ async function getMedicineById(req, res) {
         res.json(medicine);
     }
     catch (err) {
-        console.error('Error in getMedicineById:', err);
         res.status(500).json({ error: err.message });
     }
 }
 // Get discounted medicines
 async function getDiscountedMedicines(req, res) {
-    console.log('getDiscountedMedicines called');
     try {
         // Set a reasonable default and maximum limit
         const defaultLimit = 12;
@@ -134,13 +129,11 @@ async function getDiscountedMedicines(req, res) {
         });
     }
     catch (err) {
-        console.error('Error in getDiscountedMedicines:', err);
         res.status(500).json({ error: err.message });
     }
 }
 // Create new medicine (seller/admin only)
 async function createMedicine(req, res) {
-    console.log('createMedicine called');
     try {
         const medicine = new Medicine({
             ...req.body,
@@ -153,13 +146,11 @@ async function createMedicine(req, res) {
         res.status(201).json(medicine);
     }
     catch (err) {
-        console.error('Error in createMedicine:', err);
         res.status(400).json({ error: err.message });
     }
 }
 // Update medicine (seller/admin only)
 async function updateMedicine(req, res) {
-    console.log('updateMedicine called');
     try {
         const medicine = await Medicine.findById(req.params.id);
         if (!medicine) {
@@ -185,13 +176,11 @@ async function updateMedicine(req, res) {
         res.json(medicine);
     }
     catch (err) {
-        console.error('Error in updateMedicine:', err);
         res.status(400).json({ error: err.message });
     }
 }
 // Delete medicine (seller/admin only)
 async function deleteMedicine(req, res) {
-    console.log('deleteMedicine called');
     try {
         const medicine = await Medicine.findById(req.params.id);
         if (!medicine) {
@@ -205,7 +194,6 @@ async function deleteMedicine(req, res) {
         res.json({ message: 'Medicine deleted successfully' });
     }
     catch (err) {
-        console.error('Error in deleteMedicine:', err);
         res.status(500).json({ error: err.message });
     }
 }

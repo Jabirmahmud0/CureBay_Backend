@@ -196,7 +196,7 @@ async function validateCoupon(req, res) {
         // Check minimum order amount
         if (orderAmount && coupon.minimumOrderAmount && orderAmount < coupon.minimumOrderAmount) {
             return res.status(400).json({ 
-                error: `Minimum order amount is $${coupon.minimumOrderAmount}` 
+                error: `Minimum order amount is ৳${coupon.minimumOrderAmount}` 
             });
         }
         
@@ -221,11 +221,51 @@ async function validateCoupon(req, res) {
     }
 }
 
+// Apply coupon (increment used count)
+async function applyCoupon(req, res) {
+    try {
+        const { code } = req.body;
+        
+        if (!code) {
+            return res.status(400).json({ error: 'Coupon code is required' });
+        }
+        
+        // Find and update the coupon in one operation
+        const coupon = await Coupon.findOneAndUpdate(
+            { 
+                code: code.toUpperCase(),
+                isActive: true,
+                startDate: { $lte: new Date() },
+                endDate: { $gte: new Date() }
+            },
+            { $inc: { usedCount: 1 } },
+            { new: true }
+        );
+        
+        if (!coupon) {
+            return res.status(404).json({ error: 'Invalid or expired coupon' });
+        }
+        
+        // Check usage limit after incrementing
+        if (coupon.usageLimit && coupon.usedCount > coupon.usageLimit) {
+            // Revert the increment if we've exceeded the limit
+            await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: -1 } });
+            return res.status(400).json({ error: 'Coupon usage limit exceeded' });
+        }
+        
+        res.json({ message: 'Coupon applied successfully', coupon });
+    } catch (err) {
+        console.error('Error in applyCoupon:', err);
+        res.status(500).json({ error: err.message });
+    }
+}
+
 module.exports = {
     getCoupons,
     getCouponById,
     createCoupon,
     updateCoupon,
     deleteCoupon,
-    validateCoupon
+    validateCoupon,
+    applyCoupon
 };

@@ -14,12 +14,6 @@ const {
 const { syncUser } = require('../middleware/userSync');
 const mongoose = require('mongoose');
 
-// Add a simple test route
-router.get('/test', (req, res) => {
-  console.log('GET /api/hero-slides/test called');
-  return res.json({ message: 'Hero slides test route working!' });
-});
-
 // Public routes
 router.get('/', (req, res) => {
   console.log('GET /api/hero-slides/ called');

@@ -12,11 +12,14 @@ const heroSlideRoutes = require('./routes/heroSlides');
 const bannerRoutes = require('./routes/banners');
 const orderRoutes = require('./routes/orders');
 const couponRoutes = require('./routes/coupons');
+const paymentRoutes = require('./routes/payments');
+const reviewsRoutes = require('./routes/reviews');
+const statsRoutes = require('./routes/stats');
+const { devAuth } = require('./middleware/devAuth');
+
 const Medicine = require('./models/Medicine');
 const User = require('./models/User');
 const Order = require('./models/Order');
-
-console.log('Starting server...');
 
 // Load environment variables
 dotenv.config();
@@ -24,143 +27,49 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
-
-// Simple test endpoint
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'Test endpoint working' });
-});
-
-// Stats endpoint
-app.get('/api/stats', async (req, res) => {
-    try {
-        // Return fixed values for now to test if endpoint works
-        res.json({ products: 300, customers: 1500, support: 30 });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch stats' });
-    }
-});
-
-// Completely new endpoint to test routing
-app.get('/api/stats-new', async (req, res) => {
-    try {
-        res.json({ products: 300, customers: 1500, support: 30, message: 'New stats endpoint working' });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch stats' });
-    }
-});
-
 // Middleware
-console.log('Adding cors middleware');
 app.use(cors());
-console.log('Cors middleware added');
-
-console.log('Adding express.json middleware');
 app.use(express.json());
-console.log('Express.json middleware added');
-
-console.log('Adding express.urlencoded middleware');
 app.use(express.urlencoded({ extended: true }));
-console.log('Express.urlencoded middleware added');
 
-console.log('Adding express.static middleware');
+// Apply devAuth middleware only in development mode
+console.log('Checking NODE_ENV:', process.env.NODE_ENV);
+if (process.env.NODE_ENV === 'development') {
+    console.log('Applying devAuth middleware');
+    app.use(devAuth);
+} else {
+    console.log('Not applying devAuth middleware, NODE_ENV:', process.env.NODE_ENV);
+}
+
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-console.log('Express.static middleware added');
 
-// Add a simple test endpoint at the very beginning to verify routing works
-app.get('/api/test-routing', (req, res) => {
-    res.json({ message: 'Routing is working' });
-});
-
-// Test coupon route
-app.get('/api/test-coupon', (req, res) => {
-    res.json({ message: 'Coupon route test working' });
-});
-
-// Register orders routes
-app.use('/api/orders', (req, res, next) => {
-    console.log('Orders route middleware hit');
-    next();
-}, orderRoutes);
-console.log('Registered /api/orders routes');
-
-// Register coupons routes
-console.log('About to register /api/coupons routes');
-console.log('Coupon routes object:', couponRoutes);
+// Register routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/medicines', medicineRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/hero-slides', heroSlideRoutes);
+app.use('/api/banners', bannerRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/coupons', couponRoutes);
-console.log('Registered /api/coupons routes');
-
-// Test route
-app.get('/api/test-coupons-direct', (req, res) => {
-  res.json({ message: 'Direct test route working' });
-});
-
-
-
-// Other routes
-app.use('/api/auth', (req, res, next) => {
-    console.log('Auth route middleware hit');
-    next();
-}, authRoutes);
-console.log('Registered /api/auth routes');
-
-app.use('/api/users', (req, res, next) => {
-    console.log('Users route middleware hit');
-    next();
-}, userRoutes);
-console.log('Registered /api/users routes');
-
-app.use('/api/admin', (req, res, next) => {
-    console.log('Admin route middleware hit');
-    next();
-}, adminRoutes);
-console.log('Registered /api/admin routes');
-
-app.use('/api/medicines', (req, res, next) => {
-    console.log('Medicines route middleware hit');
-    next();
-}, medicineRoutes);
-console.log('Registered /api/medicines routes');
-
-app.use('/api/categories', (req, res, next) => {
-    console.log('Categories route middleware hit');
-    next();
-}, categoryRoutes);
-console.log('Registered /api/categories routes');
-
-app.use('/api/hero-slides', (req, res, next) => {
-    console.log('Hero slides route middleware hit');
-    next();
-}, heroSlideRoutes);
-console.log('Registered /api/hero-slides routes');
-
-app.use('/api/banners', (req, res, next) => {
-    console.log('Banners route middleware hit');
-    next();
-}, bannerRoutes);
-console.log('Registered /api/banners routes');
+app.use('/api/payments', paymentRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Root route
 app.get('/', (req, res) => {
-    console.log('Handling root request');
     res.json({ message: 'CureBay API Server is running!' });
 });
 
-// Debug middleware to see what routes are being hit
-app.use((req, res, next) => {
-    console.log('Debug middleware hit:', req.method, req.path);
-    next();
-});
-
-// Error handling middleware - should be just before 404 handler
+// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// Move 404 handler to the end - this should be the last middleware
+// 404 handler
 app.use((req, res) => {
-    console.log(`[404] Route not found: ${req.method} ${req.path}`);
     res.status(404).json({ message: 'Route not found' });
 });
 
@@ -178,8 +87,9 @@ async function connectDB() {
 // Start server
 async function startServer() {
     await connectDB();
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+    const server = app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
 }
 

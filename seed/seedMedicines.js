@@ -63,19 +63,47 @@ const descriptions = [
   "Vitamin supplement for overall health"
 ];
 
-// Generate 15 medicines for each category
+// List of local medicine images
+const medicineImages = [
+  "/medicine/med_1.jpeg",
+  "/medicine/med_1.jpg",
+  "/medicine/med_1.png",
+  "/medicine/med_2.jpg",
+  "/medicine/med_2.png",
+  "/medicine/med_3.jpg",
+  "/medicine/med_3.png",
+  "/medicine/med_4.jpg",
+  "/medicine/med_4.png",
+  "/medicine/med_5.jpg",
+  "/medicine/med_5.png",
+  "/medicine/med_6.jpg",
+  "/medicine/med_6.png",
+  "/medicine/med_7.jpg",
+  "/medicine/med_7.png",
+  "/medicine/med_8.png",
+  "/medicine/med_9.png",
+  "/medicine/med_10.png",
+  "/medicine/capsule.jpg",
+  "/medicine/chewable.png",
+  "/medicine/drops.png",
+  "/medicine/inhaler.png"
+];
+
+// Generate 10 medicines for each category
 async function generateMedicines() {
   try {
     // Get all categories
     const categories = await Category.find({});
     console.log(`Found ${categories.length} categories`);
     
-    // Get seller user
-    const sellerUser = await User.findOne({ role: "seller" });
-    if (!sellerUser) {
-      console.error("No seller user found. Please run seedData.js first to create a seller.");
+    // Get all seller users
+    const sellerUsers = await User.find({ role: "seller" });
+    if (sellerUsers.length < 2) {
+      console.error("At least 2 seller users are required. Please run seedData.js first to create sellers.");
       process.exit(1);
     }
+    
+    console.log(`Found ${sellerUsers.length} sellers`);
     
     // Clear existing medicines
     await Medicine.deleteMany({});
@@ -83,22 +111,26 @@ async function generateMedicines() {
     
     let totalMedicines = 0;
     
-    // Generate 15 medicines for each category
+    // Generate 10 medicines for each category
     for (let i = 0; i < categories.length; i++) {
       const category = categories[i];
       const medicines = [];
       
-      for (let j = 0; j < 15; j++) {
-        const medicineIndex = (i * 15 + j) % medicineNames.length;
-        const companyIndex = (i * 15 + j) % companies.length;
-        const massUnitIndex = (i * 15 + j) % massUnits.length;
-        const descIndex = (i * 15 + j) % descriptions.length;
+      for (let j = 0; j < 10; j++) {
+        const medicineIndex = (i * 10 + j) % medicineNames.length;
+        const companyIndex = (i * 10 + j) % companies.length;
+        const massUnitIndex = (i * 10 + j) % massUnits.length;
+        const descIndex = (i * 10 + j) % descriptions.length;
+        const imageIndex = (i * 10 + j) % medicineImages.length;
+        
+        // Distribute medicines between sellers (alternate between sellers)
+        const sellerIndex = (i * 10 + j) % sellerUsers.length;
         
         medicines.push({
           name: `${medicineNames[medicineIndex]} ${massUnits[massUnitIndex]}`,
           genericName: medicineNames[medicineIndex],
           description: descriptions[descIndex],
-          image: `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000)}?w=300&h=300&fit=crop&auto=format`,
+          image: medicineImages[imageIndex],
           company: companies[companyIndex],
           massUnit: massUnits[massUnitIndex],
           price: parseFloat((Math.random() * 100 + 5).toFixed(2)),
@@ -106,7 +138,7 @@ async function generateMedicines() {
           inStock: Math.random() > 0.1, // 90% chance of being in stock
           stockQuantity: Math.floor(Math.random() * 500) + 10,
           category: category._id,
-          seller: sellerUser._id
+          seller: sellerUsers[sellerIndex]._id
         });
       }
       
@@ -114,6 +146,12 @@ async function generateMedicines() {
       const createdMedicines = await Medicine.insertMany(medicines);
       totalMedicines += createdMedicines.length;
       console.log(`Created ${createdMedicines.length} medicines for category: ${category.name}`);
+    }
+    
+    // Show distribution of medicines among sellers
+    for (let i = 0; i < sellerUsers.length; i++) {
+      const count = await Medicine.countDocuments({ seller: sellerUsers[i]._id });
+      console.log(`Seller ${sellerUsers[i].email} has ${count} medicines`);
     }
     
     console.log(`Total medicines created: ${totalMedicines}`);

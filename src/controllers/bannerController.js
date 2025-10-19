@@ -4,7 +4,6 @@ const Banner = require('../models/Banner');
 
 // Get all banners with filtering
 async function getBanners(req, res) {
-    console.log('getBanners called');
     try {
         const active = req.query.active === 'true' ? true : req.query.active === 'false' ? false : null;
         
@@ -34,14 +33,12 @@ async function getBanners(req, res) {
         
         res.json(banners);
     } catch (err) {
-        console.error('Error in getBanners:', err);
         res.status(500).json({ error: err.message });
     }
 }
 
 // Get banner by ID
 async function getBannerById(req, res) {
-    console.log('getBannerById called');
     try {
         const banner = await Banner.findById(req.params.id);
         
@@ -51,14 +48,12 @@ async function getBannerById(req, res) {
         
         res.json(banner);
     } catch (err) {
-        console.error('Error in getBannerById:', err);
         res.status(500).json({ error: err.message });
     }
 }
 
 // Create new banner (admin only)
 async function createBanner(req, res) {
-    console.log('createBanner called');
     try {
         // Map priority to order if provided
         const bannerData = { ...req.body };
@@ -71,14 +66,12 @@ async function createBanner(req, res) {
         await banner.save();
         res.status(201).json(banner);
     } catch (err) {
-        console.error('Error in createBanner:', err);
         res.status(400).json({ error: err.message });
     }
 }
 
 // Update banner (admin only)
 async function updateBanner(req, res) {
-    console.log('updateBanner called');
     try {
         const banner = await Banner.findById(req.params.id);
         
@@ -98,14 +91,12 @@ async function updateBanner(req, res) {
         
         res.json(banner);
     } catch (err) {
-        console.error('Error in updateBanner:', err);
         res.status(400).json({ error: err.message });
     }
 }
 
 // Delete banner (admin only)
 async function deleteBanner(req, res) {
-    console.log('deleteBanner called');
     try {
         const banner = await Banner.findById(req.params.id);
         
@@ -117,14 +108,12 @@ async function deleteBanner(req, res) {
         
         res.json({ message: 'Banner deleted successfully' });
     } catch (err) {
-        console.error('Error in deleteBanner:', err);
         res.status(500).json({ error: err.message });
     }
 }
 
 // Toggle banner active status (admin only)
 async function toggleBannerStatus(req, res) {
-    console.log('toggleBannerStatus called');
     try {
         const banner = await Banner.findById(req.params.id);
         
@@ -137,14 +126,12 @@ async function toggleBannerStatus(req, res) {
         
         res.json(banner);
     } catch (err) {
-        console.error('Error in toggleBannerStatus:', err);
         res.status(500).json({ error: err.message });
     }
 }
 
 // Update banner priority (admin only)
 async function updateBannerPriority(req, res) {
-    console.log('updateBannerPriority called');
     try {
         const banner = await Banner.findById(req.params.id);
         
@@ -161,7 +148,6 @@ async function updateBannerPriority(req, res) {
         
         res.json(banner);
     } catch (err) {
-        console.error('Error in updateBannerPriority:', err);
         res.status(400).json({ error: err.message });
     }
 }
