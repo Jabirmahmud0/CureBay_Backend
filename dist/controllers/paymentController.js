@@ -1,6 +1,13 @@
 "use strict";
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Payment = require('../models/Payment');
+// Initialize Stripe only if the secret key is provided
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'your_stripe_secret_key_here') {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+}
+else {
+    console.warn('Stripe secret key not configured. Payment functionality will be limited.');
+}
 // Get payments for a specific seller
 const getSellerPayments = async (req, res) => {
     try {
@@ -44,6 +51,10 @@ const getAllPayments = async (req, res) => {
 // Create a Stripe payment intent
 const createPaymentIntent = async (req, res) => {
     try {
+        // Check if Stripe is configured
+        if (!stripe) {
+            return res.status(500).json({ error: 'Payment processing is not configured' });
+        }
         const { orderId, amount, currency, customerEmail } = req.body;
         // Validate required fields
         if (!orderId || !amount || !currency) {
@@ -70,6 +81,10 @@ const createPaymentIntent = async (req, res) => {
 // Confirm a payment
 const confirmPayment = async (req, res) => {
     try {
+        // Check if Stripe is configured
+        if (!stripe) {
+            return res.status(500).json({ error: 'Payment processing is not configured' });
+        }
         const { paymentIntentId, orderId } = req.body;
         // Validate required fields
         if (!paymentIntentId || !orderId) {

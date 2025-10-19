@@ -78,15 +78,15 @@ async function validateUserSession(req, res, next) {
     const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
     console.log('isDev:', isDev);
     
-    // In development mode, allow requests without token to proceed to devAuth middleware
-    if (isDev) {
-      console.log('In development mode, allowing request to proceed to devAuth');
-      return next();
-    }
-    
     // If devAuth has already attached a user, skip token verification
     if (req.user && req.firebaseUser) {
       console.log('Skipping token verification - user already attached');
+      return next();
+    }
+    
+    // In development mode, allow requests without token to proceed to devAuth middleware
+    if (isDev) {
+      console.log('In development mode, allowing request to proceed to devAuth');
       return next();
     }
     

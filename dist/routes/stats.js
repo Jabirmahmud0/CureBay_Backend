@@ -4,11 +4,6 @@ const router = express.Router();
 const Medicine = require('../models/Medicine');
 const User = require('../models/User');
 const Order = require('../models/Order');
-// Add a simple test route to verify the router is working
-router.get('/test', (req, res) => {
-    console.log('Stats test route accessed');
-    res.json({ message: 'Stats router is working' });
-});
 // GET /api/stats - returns products, customers, support counts
 // Handle both /api/stats and /api/stats/ 
 router.get('/', async (req, res) => {

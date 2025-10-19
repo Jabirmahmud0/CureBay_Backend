@@ -51,10 +51,6 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/stats', statsRoutes);
-// Test endpoint
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'Test endpoint working' });
-});
 // Root route
 app.get('/', (req, res) => {
     res.json({ message: 'CureBay API Server is running!' });

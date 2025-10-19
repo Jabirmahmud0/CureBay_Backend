@@ -18,10 +18,6 @@ const requireAdmin = (req, res, next) => {
 router.get('/', devAuth, syncUser, requireAdmin, (req, res) => {
     return couponController.getCoupons(req, res);
 });
-// Test route without middleware
-router.get('/test-public', (req, res) => {
-    return res.json({ message: 'Public test route working' });
-});
 // GET /api/coupons/:id - Get specific coupon (admin only)
 router.get('/:id', devAuth, syncUser, requireAdmin, (req, res) => {
     return couponController.getCouponById(req, res);

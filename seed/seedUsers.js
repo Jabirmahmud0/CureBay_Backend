@@ -17,8 +17,9 @@ mongoose.connect(MONGO_URI)
 
     // Create only the admin user
     const adminUser = {
-      name: "Admin",
-      email: "admin@curebay.com",
+      name: "Jabir Mahmud",
+      username: "jabir",
+      email: "jabirbhaaii2@gmail.com",
       password: "admin123", // hash this in production!
       role: "admin"
     };

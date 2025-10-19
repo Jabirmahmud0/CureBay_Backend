@@ -44,18 +44,31 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Register routes
+console.log('Registering routes...');
 app.use('/api/auth', authRoutes);
+console.log('Registered /api/auth');
 app.use('/api/users', userRoutes);
+console.log('Registered /api/users');
 app.use('/api/admin', adminRoutes);
+console.log('Registered /api/admin');
 app.use('/api/medicines', medicineRoutes);
+console.log('Registered /api/medicines');
 app.use('/api/categories', categoryRoutes);
+console.log('Registered /api/categories');
 app.use('/api/hero-slides', heroSlideRoutes);
+console.log('Registered /api/hero-slides');
 app.use('/api/banners', bannerRoutes);
+console.log('Registered /api/banners');
 app.use('/api/orders', orderRoutes);
+console.log('Registered /api/orders');
 app.use('/api/coupons', couponRoutes);
+console.log('Registered /api/coupons');
 app.use('/api/payments', paymentRoutes);
+console.log('Registered /api/payments');
 app.use('/api/reviews', reviewsRoutes);
+console.log('Registered /api/reviews');
 app.use('/api/stats', statsRoutes);
+console.log('Registered /api/stats');
 
 // Root route
 app.get('/', (req, res) => {
@@ -70,6 +83,8 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
+    console.log('404 handler hit for URL:', req.url);
+    console.log('Request method:', req.method);
     res.status(404).json({ message: 'Route not found' });
 });
 

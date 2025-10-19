@@ -208,8 +208,15 @@ router.patch('/update-profile', async (req, res) => {
 // GET /api/users - get all users (protected - admin only in production)
 router.get('/', async (req, res) => {
     try {
+        // Check if a role filter is provided
+        const { role } = req.query;
+        // Build filter object
+        const filter = {};
+        if (role) {
+            filter.role = role;
+        }
         // In production, add admin check here
-        const users = await User.find({}, { password: 0 }); // Exclude password field
+        const users = await User.find(filter, { password: 0 }); // Exclude password field
         res.json(users);
     }
     catch (err) {
