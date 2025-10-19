@@ -26,7 +26,8 @@ async function verifyToken(idToken, userData = null) {
     }
     
     // Check if we're in development mode and should use mock verification
-    if (admin.isDevelopmentMode && admin.isDevelopmentMode()) {
+    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+    if (isDevelopment && admin.isDevelopmentMode && admin.isDevelopmentMode()) {
       // In development mode, use the user data sent from frontend if available
       if (userData && userData.email) {
         const sanitizedEmail = sanitizeEmail(userData.email);
