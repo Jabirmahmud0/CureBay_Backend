@@ -46,7 +46,7 @@ async function syncUser(req, res, next) {
     decoded.email = sanitizedEmail;
     
     // Sync user data with Firebase using the service
-    const user = await UserSyncService.syncUser(decoded);
+    let user = await UserSyncService.syncUser(decoded);
     
     const validationResult = UserSyncService.validateUserSession(user);
     if (!validationResult.isValid) {
@@ -117,7 +117,18 @@ async function validateUserSession(req, res, next) {
     decoded.email = sanitizedEmail;
     
     // Just validate the existing user without syncing
-    const user = await User.findOne({ email: sanitizedEmail });
+    let user = await User.findOne({ email: sanitizedEmail });
+    
+    // If user doesn't exist, try to create them (for Google sign-in flow)
+    if (!user) {
+      try {
+        user = await UserSyncService.syncUser(decoded);
+      } catch (syncError) {
+        console.error('Failed to sync user:', syncError);
+        return res.status(401).json({ error: 'User not found and could not be created' });
+      }
+    }
+    
     const validationResult = UserSyncService.validateUserSession(user);
     
     if (!validationResult.isValid) {
