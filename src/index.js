@@ -28,7 +28,17 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://cure-bay-client.vercel.app'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
