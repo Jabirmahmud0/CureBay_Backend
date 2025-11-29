@@ -86,6 +86,14 @@ async function verifyToken(idToken, userData = null) {
 // Sync Firebase user with MongoDB user
 async function syncFirebaseUser(decodedToken) {
   try {
+    // Check database connection first
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      const error = new Error('Database connection unavailable');
+      error.code = 'DATABASE_NOT_CONNECTED';
+      throw error;
+    }
+    
     // Validate decoded token
     if (!decodedToken || !decodedToken.email) {
       throw new Error('Invalid token data');
@@ -144,6 +152,14 @@ async function syncFirebaseUser(decodedToken) {
     
     return user;
   } catch (error) {
+    // Check if it's a database connection error
+    if (error.code === 'DATABASE_NOT_CONNECTED' || 
+        (error.name === 'MongooseError' && error.message.includes('buffering'))) {
+      const dbError = new Error('Database connection unavailable');
+      dbError.code = 'DATABASE_NOT_CONNECTED';
+      throw dbError;
+    }
+    console.error('syncFirebaseUser error:', error);
     throw new Error('Failed to sync user data');
   }
 }

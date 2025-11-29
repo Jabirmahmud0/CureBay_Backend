@@ -7,6 +7,7 @@
     "dev": "nodemon src/index.js",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test:db": "node test-mongodb-connection.js",
     "seed": "node seed/seedData.js",
     "seed:banners": "node seed/seedBanners.js",
     "seed:categories": "node seed/seedCategories.js",
